@@ -1,30 +1,15 @@
 'use client'
-import { Button, buttonVariants } from "@/components/ui/button"
+import { buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { CalendarCheck, Egg, GraduationCap, PlayCircle } from "lucide-react"
+import { PlayCircle } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from 'next/navigation'
 
 const sidebarNavItems = [
   {
-    title: 'Courses',
+    title: 'Dashboard',
     href: '/',
     icon: <PlayCircle className="m-0 lg:mr-2 w-5 h-5" />
-  },
-  {
-    title: 'Trainers',
-    href: '/trainers',
-    icon: <GraduationCap className="m-0 lg:mr-2 w-5 h-5" />
-  },
-  {
-    title: 'Students',
-    href: '/students',
-    icon: <Egg className="m-0 lg:mr-2 w-5 h-5" />
-  },
-  {
-    title: 'Schedules',
-    href: '/schedules',
-    icon: <CalendarCheck className="m-0 lg:mr-2 w-5 h-5" />
   }
 ]
 
