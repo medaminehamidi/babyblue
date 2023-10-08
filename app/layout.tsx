@@ -18,10 +18,10 @@ export default function RootLayout({ children }: RootLayoutProps) {
       >
         <div className='relative flex min-h-screen flex-col'>
           <SiteHeader />
-          <div className="flex min-h-screen lg:grid lg:grid-cols-5 h-full">
+          <div className="grid min-h-screen lg:grid lg:grid-cols-5 h-full">
             <Sidebar />
 
-            <div className="w-full lg:col-span-4 border-l min-h-screen h-full border-gray-700">
+            <div className="w-full lg:col-span-4 col-span-5 border-l min-h-screen h-full border-gray-700">
               <div className='flex-1'>{children}</div>
             </div>
           </div>
