@@ -13,12 +13,12 @@ const sidebarNavItems = [
   },
   {
     title: 'Platform',
-    href: '/1',
+    href: '/platform',
     icon: <PlayCircle className="m-0 lg:mr-2 w-5 h-5" />
   },
   {
     title: 'Payments',
-    href: '/2',
+    href: '/payments',
     icon: <RefreshCcw className="m-0 lg:mr-2 w-5 h-5" />
   }
 ]
