@@ -16,7 +16,7 @@ import { Bookmark, CircleDashed, Plus } from 'lucide-react';
 import { Checkbox } from './ui/checkbox';
 import { useState } from 'react';
 import { create } from 'zustand';
-
+import { persist } from 'zustand/middleware'
 type Transaction = {
   title: string,
   amount: string,
