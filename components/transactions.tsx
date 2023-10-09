@@ -12,14 +12,21 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
-import { transactions } from '@/public/data';
-import { Bookmark, Settings } from 'lucide-react';
+import { Bookmark, CircleDashed, Plus } from 'lucide-react';
 import { Checkbox } from './ui/checkbox';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { create } from 'zustand';
 
+type Transaction = {
+  title: string,
+  amount: string,
+  type: boolean,
+  date: string,
+  description: string
+}
+
 type State = {
-  transaction: Array<object>
+  transaction: Array<Transaction>
 }
 type Action = {
   updateTransaction: (transaction: State['transaction']) => void
@@ -28,28 +35,32 @@ const useTransactionStore = create<State & Action>((set) => ({
   transaction: [],
   updateTransaction: (transaction) => set(() => ({ transaction: transaction }))
 })
-
 )
+
 export default function Transactions() {
   const [title, setTitle] = useState('')
   const [amount, setAmount] = useState('')
   const [date, setDate] = useState('')
   const [description, setDescription] = useState('')
   const [type, setType] = useState(false)
-  // const [transaction, setTransaction] = useState({
-  //   amount: '',
-  //   title: '',
-  //   type: false,
-  //   date: '',
-  //   description: '',
-  // })
-  // useEffect(() => {
-  //   console.warn(transaction)
-
-  // }, [transaction])
+  const [openModal, setOpenModal] = useState(false)
   const transaction = useTransactionStore((state) => state.transaction)
   const updateTransaction = useTransactionStore((state) => state.updateTransaction)
-
+  const handleModalSubmit = () => {
+    setTitle('')
+    setAmount('')
+    setDate('')
+    setDescription('')
+    setType(false)
+    setOpenModal(false)
+    updateTransaction([...transaction, {
+      amount: amount,
+      title: title,
+      type: type,
+      date: date,
+      description: description,
+    }])
+  }
   return (
     <div className='w-full text-2xl font-bold col-span-6 px-6 pt-6'>
       <h1>Transactions</h1>
@@ -57,23 +68,23 @@ export default function Transactions() {
       <div className='w-full flex items-center justify-between mt-4'>
         <Input placeholder='Filtet Items...' className='w-[120px] xs:w-[320px]' />
 
-        <Dialog>
+        <Dialog open={openModal} onOpenChange={setOpenModal}>
           <DialogTrigger asChild>
             <Button className='rounded-md cursor-pointer bg-black text-white p-2'>
-              <Settings />
+              <Plus />
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
               <DialogTitle>Add Transaction</DialogTitle>
               <DialogDescription>
-                Make changes to your profile here. Click save when you're done.
+                Fill transaction infos here. Click save when you're done.
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="title" className="text-right">
-                  Title
+                  Transaction Type
                 </Label>
                 <Input
                   id="Title"
@@ -84,7 +95,7 @@ export default function Transactions() {
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="date" className="text-right">
-                  Date
+                  Transaction Date
                 </Label>
                 <Input
                   id="date"
@@ -95,7 +106,7 @@ export default function Transactions() {
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="amount" className="text-right">
-                  Amount
+                  Amount Transfered
                 </Label>
                 <Input
                   id="amount"
@@ -106,7 +117,7 @@ export default function Transactions() {
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="description" className="text-right">
-                  Description
+                  Beneficiary
                 </Label>
                 <Input
                   id="description"
@@ -117,7 +128,7 @@ export default function Transactions() {
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="type" className="text-right">
-                  Sent
+                  {type ? 'Sent' : 'Recieved'}
                 </Label>
                 <Checkbox id="type" className='col-span-3'
                   checked={type}
@@ -126,19 +137,21 @@ export default function Transactions() {
               </div>
             </div>
             <DialogFooter>
-              <Button type="submit" onClick={() => updateTransaction([...transaction, {
-                amount: amount,
-                title: title,
-                type: type,
-                date: date,
-                description: description,
-              }])}>Save changes</Button>
+              <Button type="submit" onClick={() => handleModalSubmit()}>Save changes</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
       <div>
         {transaction.map((item, key) => <TransactionCard title={item.title} amount={item.amount} key={key} type={item.type} date={item.date} description={item.description} index={key.toString()} />)}
+
+        {!transaction.length && (
+          <div className='my-4 w-full flex items-center justify-center'>
+            <CircleDashed className='mr-4' />
+            <p className='text-sm font-light'>No transactions available</p>
+          </div>
+        )}
+
       </div>
       <div className='flex mt-4 mb-20 items-center'>
         <div className='rounded-md mr-4 bg-black text-white w-7 flex items-center justify-center h-7'>

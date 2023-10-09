@@ -25,8 +25,7 @@ const sidebarNavItems = [
 
 export function Sidebar() {
   const pathname = usePathname()
-  console.warn(pathname === '/')
-// xs:relative  absolute bottom-0 right-0
+
   return (
     <div className={"p-0 bg-white border-t border-slate-400 lg:border-transparent w-full lg:pb-12 lg:bg-transparent lg:relative fixed bottom-0"}>
       <div className="space-y-4 py-4">
