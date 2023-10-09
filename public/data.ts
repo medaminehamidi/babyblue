@@ -1,4 +1,4 @@
-import { LayoutDashboard, Lightbulb, RefreshCcw } from "lucide-react"
+  import { LayoutDashboard, Lightbulb, RefreshCcw } from "lucide-react"
 
 export const amounts = [
   {
