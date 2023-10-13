@@ -1,7 +1,7 @@
 'use client'
 import { buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { LayoutDashboard, PlayCircle, RefreshCcw } from "lucide-react"
+import { ArrowLeftRight, LayoutDashboard, PlayCircle, RefreshCcw } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from 'next/navigation'
 
@@ -12,9 +12,10 @@ const sidebarNavItems = [
     icon: <LayoutDashboard className="m-0 lg:mr-2 w-5 h-5" />
   },
   {
-    title: 'Platform',
+    title: 'Transaction',
     href: '/platform',
-    icon: <PlayCircle className="m-0 lg:mr-2 w-5 h-5" />
+    icon:  <ArrowLeftRight className="m-0 lg:mr-2 w-5 h-5"/>
+
   },
   {
     title: 'Payments',
@@ -39,7 +40,7 @@ export function Sidebar() {
                   buttonVariants({ variant: 'ghost' }),
                   pathname === item.href
                     ? 'bg-slate-200 hover:bg-slate-200'
-                    : 'hover:bg-slate-200',
+                    : 'hover:bg-slate-100 text-slate-500',
                   'lg:justify-start w-10 p-0 flex items-center lg:px-3 justify-center lg:w-full'
                 )}
               >
