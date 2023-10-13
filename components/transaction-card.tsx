@@ -1,4 +1,5 @@
-import { ArrowDownLeft, ArrowUpRight } from "lucide-react"
+import { ArrowDownLeft, ArrowUpRight, Trash2 } from "lucide-react"
+import { Button } from "./ui/button"
 
 
 type CardProps = {
@@ -7,14 +8,15 @@ type CardProps = {
   type: boolean,
   date: string,
   description: string,
-  index: string
+  index: string,
+  Remove: any
 }
 
-export function TransactionCard({ title, amount, type, date, description, index }: CardProps) {
+export function TransactionCard({ title, amount, type, date, description, index, Remove }: CardProps) {
 
 
   return (
-    <div className='grid grid-cols-6 sm:h-10 h-20 mt-3 items-center w-full'>
+    <div className='grid grid-cols-7 sm:h-10 h-20 mt-3 items-center w-full'>
       <div className='rounded-md text-black w-10 col-span-1 row-span-2 sm:col-span-1 flex items-center justify-center h-full bg-blue-200'>
         <p className='text-sm'>{index}</p>
       </div>
@@ -26,6 +28,9 @@ export function TransactionCard({ title, amount, type, date, description, index 
       </div>
       <p className='text-sm'>{date}</p>
       <p className='text-end text-sm'>{amount} DH</p>
+      <div className="w-full flex items-center justify-end">
+        <Button className="w-10 h-10 p-0" onClick={Remove}><Trash2 /></Button>
+      </div>
     </div>
   )
 }

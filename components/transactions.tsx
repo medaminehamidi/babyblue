@@ -14,9 +14,9 @@ import {
 import { Label } from "@/components/ui/label"
 import { Bookmark, CircleDashed, Plus } from 'lucide-react';
 import { Checkbox } from './ui/checkbox';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware'
+import { persist, createJSONStorage } from 'zustand/middleware'
 type Transaction = {
   title: string,
   amount: string,
@@ -31,10 +31,18 @@ type State = {
 type Action = {
   updateTransaction: (transaction: State['transaction']) => void
 }
-const useTransactionStore = create<State & Action>((set) => ({
-  transaction: [],
-  updateTransaction: (transaction) => set(() => ({ transaction: transaction }))
-})
+
+const useTransactionStore = create(
+  persist<State & Action>(
+    (set) => ({
+      transaction: [],
+      updateTransaction: (transaction) => set(() => ({ transaction: transaction }))
+    }),
+    {
+      name: 'transaction', // name of the item in the storage (must be unique)
+      storage: createJSONStorage(() => sessionStorage), // (optional) by default, 'localStorage' is used
+    }
+  )
 )
 
 export default function Transactions() {
@@ -46,6 +54,11 @@ export default function Transactions() {
   const [openModal, setOpenModal] = useState(false)
   const transaction = useTransactionStore((state) => state.transaction)
   const updateTransaction = useTransactionStore((state) => state.updateTransaction)
+  const [domLoaded, setDomLoaded] = useState(false);
+  useEffect(() => {
+    setDomLoaded(true);
+  }, []);
+
   const handleModalSubmit = () => {
     setTitle('')
     setAmount('')
@@ -60,6 +73,15 @@ export default function Transactions() {
       date: date,
       description: description,
     }])
+  }
+  const Remove = (index: number) => {
+    if (transaction.length > 1) {
+      transaction.splice(index, 1)
+      updateTransaction([...transaction])
+    } else {
+      updateTransaction([])
+    }
+
   }
   return (
     <div className='w-full text-2xl font-bold col-span-6 px-6 pt-6'>
@@ -142,17 +164,18 @@ export default function Transactions() {
           </DialogContent>
         </Dialog>
       </div>
-      <div>
-        {transaction.map((item, key) => <TransactionCard title={item.title} amount={item.amount} key={key} type={item.type} date={item.date} description={item.description} index={key.toString()} />)}
+      {domLoaded && (
+        <div>
+          {transaction.map((item, key) => <TransactionCard title={item.title} amount={item.amount} key={key} type={item.type} date={item.date} description={item.description} index={key.toString()} Remove={() => Remove(key)} />)}
 
-        {!transaction.length && (
-          <div className='my-4 w-full flex items-center justify-center'>
-            <CircleDashed className='mr-4' />
-            <p className='text-sm font-light'>No transactions available</p>
-          </div>
-        )}
+          {!transaction.length && (
+            <div className='my-4 w-full flex items-center justify-center'>
+              <CircleDashed className='mr-4' />
+              <p className='text-sm font-light'>No transactions available</p>
+            </div>
+          )}
 
-      </div>
+        </div>)}
       <div className='flex mt-4 mb-20 items-center'>
         <div className='rounded-md mr-4 bg-black text-white w-7 flex items-center justify-center h-7'>
           <Bookmark className='w-4 h-4' />
