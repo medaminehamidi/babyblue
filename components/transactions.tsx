@@ -17,11 +17,12 @@ import { Checkbox } from './ui/checkbox';
 import { useEffect, useState } from 'react';
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware'
+import { DatePicker } from './ui/date-picker';
 type Transaction = {
   title: string,
-  amount: string,
+  amount: number,
   type: boolean,
-  date: string,
+  date: Date,
   description: string
 }
 
@@ -47,8 +48,8 @@ const useTransactionStore = create(
 
 export default function Transactions() {
   const [title, setTitle] = useState('')
-  const [amount, setAmount] = useState('')
-  const [date, setDate] = useState('')
+  const [amount, setAmount] = useState(0)
+  const [date, setDate] = useState<Date>(new Date)
   const [description, setDescription] = useState('')
   const [type, setType] = useState(false)
   const [openModal, setOpenModal] = useState(false)
@@ -61,8 +62,7 @@ export default function Transactions() {
 
   const handleModalSubmit = () => {
     setTitle('')
-    setAmount('')
-    setDate('')
+    setAmount(0)
     setDescription('')
     setType(false)
     setOpenModal(false)
@@ -119,12 +119,13 @@ export default function Transactions() {
                 <Label htmlFor="date" className="text-right">
                   Transaction Date
                 </Label>
-                <Input
+                <DatePicker date={date} setDate={setDate} />
+                {/* <Input
                   id="date"
                   className="col-span-3"
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
-                />
+                /> */}
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="amount" className="text-right">
@@ -132,9 +133,10 @@ export default function Transactions() {
                 </Label>
                 <Input
                   id="amount"
+                  type='number'
                   className="col-span-3"
                   value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
+                  onChange={(e) => setAmount(Number(e.target.value))}
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
@@ -165,7 +167,7 @@ export default function Transactions() {
         </Dialog>
       </div>
       {domLoaded && (
-        <div>
+        <div className='sm:flex sm:flex-col gap-2 grid grid-cols-2 justify-between sm:justify-normal'>
           {transaction.map((item, key) => <TransactionCard title={item.title} amount={item.amount} key={key} type={item.type} date={item.date} description={item.description} index={key.toString()} Remove={() => Remove(key)} />)}
 
           {!transaction.length && (

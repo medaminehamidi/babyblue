@@ -40,7 +40,7 @@ export function Sidebar() {
                   buttonVariants({ variant: 'ghost' }),
                   pathname === item.href
                     ? 'bg-slate-200 hover:bg-slate-200'
-                    : 'hover:bg-slate-100 text-slate-500',
+                    : 'hover:bg-slate-200  text-slate-500',
                   'lg:justify-start w-10 p-0 flex items-center lg:px-3 justify-center lg:w-full'
                 )}
               >
