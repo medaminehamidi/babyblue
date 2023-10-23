@@ -1,11 +1,13 @@
 'use client'
 import { buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { ArrowLeftRight, LayoutDashboard, PlayCircle, RefreshCcw } from "lucide-react"
+import { ArrowLeftRight, LayoutDashboard, Smile } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from 'next/navigation'
+import { useSupabase } from "./SupabaseSessionProvider"
+import { useUserStore } from "@/app/store"
 
-const sidebarNavItems = [
+const sidebarNavItems = (user: boolean, username: string) => [
   {
     title: 'Dashboard',
     href: '/',
@@ -18,21 +20,23 @@ const sidebarNavItems = [
 
   },
   {
-    title: 'Payments',
-    href: '/payments',
-    icon: <RefreshCcw className="m-0 lg:mr-2 w-5 h-5" />
+    title: `${user ? username : 'Login'}`,
+    href: `${user ? '/profile' : '/signin'}`,
+    icon: <Smile className="m-0 lg:mr-2 w-5 h-5" />
   }
 ]
 
 export function Sidebar() {
   const pathname = usePathname()
 
+  const currentUser = useUserStore((state) => state.user)
+  const { user } = useSupabase()
   return (
     <div className={"p-0 bg-white border-t border-slate-400 lg:border-transparent w-full lg:pb-12 lg:bg-transparent lg:relative fixed bottom-0"}>
       <div className="space-y-4 py-4">
         <div className="p-0 lg:px-3 lg:py-2">
           <div className="space-y-0 lg:space-y-1 lg:items-start lg:justify-start justify-around items-center flex lg:flex-col">
-            {sidebarNavItems.map((item) => (
+            {sidebarNavItems(!!user, currentUser.username).map((item) => (
               <Link
                 key={item.href}
                 href={item.href}

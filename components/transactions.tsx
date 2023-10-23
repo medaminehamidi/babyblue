@@ -15,36 +15,13 @@ import { Label } from "@/components/ui/label"
 import { Bookmark, CircleDashed, Plus } from 'lucide-react';
 import { Checkbox } from './ui/checkbox';
 import { useEffect, useState } from 'react';
-import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware'
 import { DatePicker } from './ui/date-picker';
-type Transaction = {
-  title: string,
-  amount: number,
-  type: boolean,
-  date: Date,
-  description: string
-}
-
-type State = {
-  transaction: Array<Transaction>
-}
-type Action = {
-  updateTransaction: (transaction: State['transaction']) => void
-}
-
-const useTransactionStore = create(
-  persist<State & Action>(
-    (set) => ({
-      transaction: [],
-      updateTransaction: (transaction) => set(() => ({ transaction: transaction }))
-    }),
-    {
-      name: 'transaction', // name of the item in the storage (must be unique)
-      storage: createJSONStorage(() => sessionStorage), // (optional) by default, 'localStorage' is used
-    }
-  )
-)
+import { useBalanceStore, useCategoryState, useTransactionStore } from '@/app/store';
+import { RadioGroup, RadioGroupItem } from './ui/radio-group';
+import { useSupabase } from './SupabaseSessionProvider';
+import { toast } from './ui/use-toast';
+import { calculateTotalLeft } from './income';
+import moment from 'moment'
 
 export default function Transactions() {
   const [title, setTitle] = useState('')
@@ -53,36 +30,92 @@ export default function Transactions() {
   const [description, setDescription] = useState('')
   const [type, setType] = useState(false)
   const [openModal, setOpenModal] = useState(false)
-  const transaction = useTransactionStore((state) => state.transaction)
+  const transactions = useTransactionStore((state) => state.transaction)
+  const balance = useBalanceStore((state) => state.balance)
   const updateTransaction = useTransactionStore((state) => state.updateTransaction)
   const [domLoaded, setDomLoaded] = useState(false);
   useEffect(() => {
     setDomLoaded(true);
   }, []);
-
+  const timeLeft = moment().isAfter(moment(`${moment().format('MM')}/26/${moment().format('YYYY')}`))
+    ? moment.duration(moment(`${moment().add(1, 'M').format('MM')}/26/${moment().format('YYYY')}`).diff(moment())).asDays()
+    : moment.duration(moment(`${moment().format('MM')}/26/${moment().format('YYYY')}`).diff(moment())).asDays()
   const handleModalSubmit = () => {
     setTitle('')
     setAmount(0)
     setDescription('')
     setType(false)
     setOpenModal(false)
-    updateTransaction([...transaction, {
+    onSubmit({
       amount: amount,
-      title: title,
-      type: type,
+      category: title,
+      sent: type,
       date: date,
-      description: description,
-    }])
+      beneficiary: description || 'Empty',
+    })
   }
-  const Remove = (index: number) => {
-    if (transaction.length > 1) {
-      transaction.splice(index, 1)
-      updateTransaction([...transaction])
+  const Remove = async (index: number, id: any) => {
+    if (transactions.length > 1) {
+      transactions.splice(index, 1)
+      updateTransaction([...transactions])
     } else {
       updateTransaction([])
     }
-
+    const { error } = await supabase
+      .from('transactions')
+      .delete()
+      .eq('id', id)
+    toast({
+      description: 'Transaction Removed successfully'
+    })
   }
+
+  const { user, supabase } = useSupabase()
+
+  useEffect(() => {
+    const fetchTransactions = async () => {
+      const results = await supabase
+        .from('transactions')
+        .select('*')
+        .eq('userid', user?.id)
+      if (results?.data) {
+        const trans = results?.data.map(item => {
+          return {
+            id: item.id,
+            amount: item.amount,
+            title: item.category,
+            type: item.sent,
+            date: item.date,
+            description: item.beneficiary,
+          }
+        })
+        updateTransaction([...trans])
+      }
+    }
+    if (user?.id) fetchTransactions()
+  }, [user?.id])
+
+
+  const onSubmit = async (transaction: any) => {
+    const result = await supabase
+      .from('transactions')
+      .insert({ ...transaction, userid: user?.id })
+      .select()
+    if (result?.data && result?.data.at(0)) {
+      updateTransaction([...transactions, {
+        id: result?.data.at(0).id,
+        amount: result?.data.at(0).amount,
+        title: result?.data.at(0).category,
+        type: result?.data.at(0).sent,
+        date: result?.data.at(0).date,
+        description: result?.data.at(0).beneficiary || 'Empty',
+      }])
+    }
+    toast({
+      description: 'Transaction added successfully'
+    })
+  }
+  const categories = useCategoryState((state) => state.categories)
   return (
     <div className='w-full text-2xl font-bold col-span-6 px-6 pt-6'>
       <h1>Transactions</h1>
@@ -108,12 +141,23 @@ export default function Transactions() {
                 <Label htmlFor="title" className="text-right">
                   Transaction Type
                 </Label>
-                <Input
+                {/* <Input
                   id="Title"
                   className="col-span-3"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                />
+                /> */}
+                <RadioGroup onValueChange={(e) => setTitle(e)} className='flex' defaultValue={categories[0]}>
+                  {categories.map(category => {
+                    return (
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value={category} id={category} />
+                        <Label htmlFor={category}>{category}</Label>
+                      </div>
+                    )
+
+                  })}
+                </RadioGroup>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="date" className="text-right">
@@ -166,24 +210,26 @@ export default function Transactions() {
           </DialogContent>
         </Dialog>
       </div>
-      {domLoaded && (
-        <div className='sm:flex sm:flex-col gap-2 grid grid-cols-2 justify-between sm:justify-normal'>
-          {transaction.map((item, key) => <TransactionCard title={item.title} amount={item.amount} key={key} type={item.type} date={item.date} description={item.description} index={key.toString()} Remove={() => Remove(key)} />)}
+      {
+        domLoaded && (
+          <div className='sm:flex sm:flex-col gap-2 grid grid-cols-2 justify-between sm:justify-normal'>
+            {transactions.map((item, key) => <TransactionCard title={item.title} amount={item.amount} key={key} type={item.type} date={item.date} description={item.description} index={key.toString()} Remove={() => Remove(key, item.id)} />)}
 
-          {!transaction.length && (
-            <div className='my-4 w-full flex items-center justify-center'>
-              <CircleDashed className='mr-4' />
-              <p className='text-sm font-light'>No transactions available</p>
-            </div>
-          )}
+            {!transactions.length && (
+              <div className='my-4 w-full flex items-center justify-center'>
+                <CircleDashed className='mr-4' />
+                <p className='text-sm font-light'>No transactions available</p>
+              </div>
+            )}
 
-        </div>)}
+          </div>)
+      }
       <div className='flex mt-4 mb-20 items-center'>
         <div className='rounded-md mr-4 bg-black text-white w-7 flex items-center justify-center h-7'>
           <Bookmark className='w-4 h-4' />
         </div>
-        <p className='text-xs text-gray-600 font-light'>you have 1500 DH remaining funds over the next 23 days</p>
+        <p className='text-xs text-gray-600 font-light'>you have {calculateTotalLeft(transactions, balance.income).toLocaleString()} DH remaining funds over the next {timeLeft.toFixed(0)} days</p>
       </div>
-    </div>
+    </div >
   )
 }
