@@ -47,7 +47,7 @@ export function TransactionCard({ title, amount, type, date, description, isUpco
       </Dialog>
       <div className="w-full">
         <p className='text-sm'>{description}</p>
-        <p className='text-sm font-light hidden sm:block'>{moment(date).format("D MMMM, YYYY")} at {moment(date).format("H:mm A")}</p>
+        <p className='text-sm font-light hidden sm:block'>{moment(date).format("D MMMM, YYYY")}</p>
         <p className='text-sm font-light block sm:hidden'>{moment(date).format("DD/MM/YY")}</p>
       </div>
       <div className='w-full  hidden sm:flex items-center'>

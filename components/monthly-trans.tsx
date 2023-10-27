@@ -1,5 +1,4 @@
 'use client'
-import TransactionC2 from "@/components/transaction-c2";
 import moment from 'moment'
 import { TransactionCard } from "./transaction-card";
 import { useTransactionStore } from "@/app/store";
@@ -7,36 +6,10 @@ import { toast } from "./ui/use-toast";
 import { useSupabase } from "./SupabaseSessionProvider";
 import { useEffect, useState } from "react";
 type MonthlytransProps = {
-  month: Date,
+  month: any,
+  itemTransactions: any
 }
-const transactionS = [
-  {
-    beneficiary: "fiat",
-    date: new Date,
-    subCat: "Fashion",
-    amount: 200.00
-  },
-  {
-    beneficiary: "fiat",
-    date: new Date,
-    subCat: "Fashion",
-    amount: 200.00
-  },
-  {
-    beneficiary: "fiat",
-    date: new Date,
-    subCat: "Fashion",
-    amount: 200.00
-  },
-  {
-    beneficiary: "fiat",
-    date: new Date,
-    subCat: "Fashion",
-    amount: 200.00
-  },
-
-]
-export default function Monthlytrans({ month }: MonthlytransProps) {
+export default function Monthlytrans({ month, itemTransactions }: MonthlytransProps) {
   const [domLoaded, setDomLoaded] = useState(false);
   useEffect(() => {
     setDomLoaded(true);
@@ -84,8 +57,8 @@ export default function Monthlytrans({ month }: MonthlytransProps) {
   }
   return (
     <div className="w-full rounded-md">
-      <h1 className="font-light text-lg mt-4">{moment(month).format("D MMMM, YYYY")} </h1>
-      {domLoaded && <div>{transactions.map((item, key) => <TransactionCard
+      <h1 className="font-light text-lg mt-4">{month} </h1>
+      {domLoaded && <div>{itemTransactions.map((item: any, key: any) => <TransactionCard
         title={item.title}
         amount={item.amount}
         isUpcoming={item.isUpcoming}
