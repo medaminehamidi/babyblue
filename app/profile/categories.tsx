@@ -47,9 +47,9 @@ export function CategoriesForm() {
   const [editing, setEditing] = useState({ index: 499, value: '' })
   return (
     <div>
-      <div className='grid gap-2 mt-5'>
-        <div className='grid gap-1'>
-          {domLoaded && <div className="flex h-5 items-center space-x-4 text-sm">
+      <div className='mt-5'>
+        <div>
+          {domLoaded && <div className="grid grid-cols-3 sm:flex gap-4 items-center text-sm">
             {
               categories.map((category: any, key: any) => {
                 return (
@@ -65,7 +65,7 @@ export function CategoriesForm() {
                           categories[key] = editing.value 
                           updateCategories(editing.value ? categories : categories.filter(Boolean))
                           setEditing({ index: 499, value: '' })
-                        }} className="flex rounded cursor-pointer bg-red-100 ml-2 text-red-500 items-center justify-center">
+                        }} className="flex rounded cursor-pointer bg-red-100 text-red-500 items-center justify-center">
                           <Dot className="w-5 h-5" />
                         </div>
                       </>

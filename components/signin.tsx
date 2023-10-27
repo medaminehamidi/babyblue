@@ -4,18 +4,26 @@ import { siteConfig } from '@/config/site'
 import { supabase } from '@/lib/supabase'
 import { cn } from '@/lib/utils'
 import { useFormik } from 'formik'
-import { useRouter } from 'next/navigation'
+import { redirect, useRouter } from 'next/navigation'
 import * as React from 'react'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
 import { Label } from './ui/label'
+import { useSupabase } from './SupabaseSessionProvider'
 
 interface UserAuthFormProps extends React.HTMLAttributes<HTMLDivElement> {}
 
 export default function SignIn({ className, ...props }: UserAuthFormProps) {
   const [isLoading, setIsLoading] = React.useState<boolean>(false)
   const [authError, setAuthError] = React.useState('')
+  
+  const { user } = useSupabase()
   const router = useRouter()
+  React.useEffect(() => {
+    if (user) {
+      redirect('/')
+    }
+  }, [user])
   const handleFormSubmit = async (email: string, password: string) => {
     setIsLoading(true)
 

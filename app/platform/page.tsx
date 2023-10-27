@@ -4,17 +4,25 @@ import { AlertOctagon } from "lucide-react";
 import { useBalanceStore, useTransactionStore } from "../store";
 import { useEffect, useState } from "react";
 import { Progress } from "@/components/ui/progress";
+import { redirect } from "next/navigation";
+import { useSupabase } from "@/components/SupabaseSessionProvider";
 const calculateTotalTransactions = (transactions: any) => {
   const totalBills = transactions.reduce((total: number, transaction: any) => {
-    
+
     return total + transaction.amount
   }, 0)
   return totalBills
 }
 export default function Home() {
+  const { user } = useSupabase()
+
   const [first, setFirst] = useState(0)
-  
-  
+  useEffect(() => {
+    if (!user) {
+      redirect('/signin')
+    }
+  }, [user])
+
   const balance = useBalanceStore((state) => state.balance)
   const [domLoaded, setDomLoaded] = useState(false);
   useEffect(() => {
@@ -22,15 +30,15 @@ export default function Home() {
   }, []);
   const transactions = useTransactionStore((state) => state.transaction)
   const value = calculateTotalTransactions(transactions)
-const perce = (value/balance.income*100)
-console.warn(perce)
-useEffect(() => {
-  if(balance && balance.income && transactions.length) {
-    setFirst((value/balance.income*100))
-  }
+  const perce = (value / balance.income * 100)
+  console.warn(perce)
+  useEffect(() => {
+    if (balance && balance.income && transactions.length) {
+      setFirst((value / balance.income * 100))
+    }
 
- 
-}, [domLoaded])
+
+  }, [domLoaded])
   return (
     <div className="w-full grid grid-cols-5">
       <div className="col-span-3 border-r border-black p-6">
@@ -53,12 +61,12 @@ useEffect(() => {
             <p className="text-sm text-gray-600 ml-1">of {balance.income} DH</p>
           </div>}
           <div className="w-full flex items-center mt-2 justify-between">
-          { <Progress value={first} className="w-[80%] h-2"/>}
+            {<Progress value={first} className="w-[80%] h-2" />}
 
-            {domLoaded &&<p className="text-sm">{(calculateTotalTransactions(transactions)/balance.income*100).toFixed(0)}%</p>}
+            {domLoaded && <p className="text-sm">{(calculateTotalTransactions(transactions) / balance.income * 100).toFixed(0)}%</p>}
           </div>
           <div className="flex items-center mt-2">
-            <AlertOctagon className="w-4 h-4 text-red-600"/>
+            <AlertOctagon className="w-4 h-4 text-red-600" />
             <p className="text-xs ml-2 text-red-600">Your spending limit has almost reached the limit!</p>
           </div>
         </div>

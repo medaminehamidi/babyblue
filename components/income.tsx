@@ -3,14 +3,20 @@ import { PiggyBank, RefreshCcw } from 'lucide-react';
 import { Button } from './ui/button';
 import { useBalanceStore, useTransactionStore } from '@/app/store';
 import { useEffect, useState } from 'react';
-const calculateTotaBills = (transactions: any) => {
+const calculateTotaBills = (transactions: any, balance: any) => {
   const totalBills = transactions.reduce((total: number, transaction: any) => {
-    if (transaction.title === 'Bills') {
+    if (transaction.type) {
       return total + transaction.amount
     }
     return total
   }, 0)
-  return totalBills
+  const totalRecieved = transactions.reduce((total: number, transaction: any) => {
+    if (!transaction.type) {
+      return total + transaction.amount
+    }
+    return total
+  }, 0)
+  return balance - totalBills + totalRecieved
 }
 const calculateTotaSavings = (transactions: any) => {
   const totalSavings = transactions.reduce((total: number, transaction: any) => {
@@ -23,7 +29,11 @@ const calculateTotaSavings = (transactions: any) => {
 }
 export const calculateTotalLeft = (transactions: any, balance: any) => {
   const totalDept = transactions.reduce((total: number, transaction: any) => {
-    return total + transaction.amount
+    if (!transaction.isUpcoming && transaction.type) {
+
+      return total + transaction.amount
+    }
+    return total
   }, 0)
   return balance - totalDept
 }
@@ -49,8 +59,8 @@ export default function Income() {
               Total balance
             </p>
             <div className='flex items-end justify-start'>
-              {domLoaded && <p className='text-5xl font-bold mr-1'>
-                {calculateTotalLeft(transactions, balance.income).toLocaleString()}
+              {domLoaded && <p className='text-4xl sm:text-5xl font-bold mr-1'>
+                {calculateTotaBills(transactions, balance.income).toLocaleString()}
               </p>}
               <p className='text-base font-light'>
                 DH
@@ -92,12 +102,12 @@ export default function Income() {
                 <RefreshCcw className="w-3 h-3 text-white" />
               </div>
               <p className='text-xs font-light'>
-                Monthly Total Bills
+                Without Upcoming
               </p>
             </div>
             <div className='flex items-end justify-start'>
               {domLoaded && <p className='text-2xl font-bold mr-1'>
-                {calculateTotaBills(transactions).toLocaleString()}
+                {calculateTotalLeft(transactions, balance.income).toLocaleString()}
               </p>}
               <p className='text-base font-light'>
                 DH

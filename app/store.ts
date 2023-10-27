@@ -85,7 +85,8 @@ export type Transaction = {
   amount: number,
   type: boolean,
   date: Date,
-  description: string
+  description: string,
+  isUpcoming: boolean
 }
 
 export type TransactionState = {

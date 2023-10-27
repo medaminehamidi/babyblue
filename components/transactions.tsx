@@ -12,11 +12,11 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
-import { Bookmark, CircleDashed, Plus } from 'lucide-react';
+import { Bookmark, CircleDashed, Plus, Search } from 'lucide-react';
 import { Checkbox } from './ui/checkbox';
 import { useEffect, useState } from 'react';
 import { DatePicker } from './ui/date-picker';
-import { useBalanceStore, useCategoryState, useTransactionStore } from '@/app/store';
+import { Transaction, useBalanceStore, useCategoryState, useTransactionStore } from '@/app/store';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 import { useSupabase } from './SupabaseSessionProvider';
 import { toast } from './ui/use-toast';
@@ -24,16 +24,17 @@ import { calculateTotalLeft } from './income';
 import moment from 'moment'
 
 export default function Transactions() {
-  const [title, setTitle] = useState('')
   const [amount, setAmount] = useState(0)
   const [date, setDate] = useState<Date>(new Date)
   const [description, setDescription] = useState('')
   const [type, setType] = useState(false)
+  const [isUpcoming, setIsUpcoming] = useState(false)
   const [openModal, setOpenModal] = useState(false)
   const transactions = useTransactionStore((state) => state.transaction)
   const balance = useBalanceStore((state) => state.balance)
   const updateTransaction = useTransactionStore((state) => state.updateTransaction)
   const [domLoaded, setDomLoaded] = useState(false);
+  const [filteredTransactions, setFilteredTransactions] = useState<Transaction[]>([])
   useEffect(() => {
     setDomLoaded(true);
   }, []);
@@ -51,6 +52,7 @@ export default function Transactions() {
       category: title,
       sent: type,
       date: date,
+      isUpcoming: isUpcoming,
       beneficiary: description || 'Empty',
     })
   }
@@ -69,7 +71,28 @@ export default function Transactions() {
       description: 'Transaction Removed successfully'
     })
   }
-
+  const UpdateTransaction = async (index: any, id: any) => {
+    const result = await supabase
+      .from('transactions')
+      .update({ isUpcoming: false })
+      .eq('id', id)
+      .select()
+    if (result?.data && result?.data.at(0)) {
+      transactions.splice(index, 1)
+      updateTransaction([{
+        id: result?.data.at(0).id,
+        amount: result?.data.at(0).amount,
+        title: result?.data.at(0).category,
+        type: result?.data.at(0).sent,
+        date: result?.data.at(0).date,
+        description: result?.data.at(0).beneficiary || 'Empty',
+        isUpcoming: result?.data.at(0).isUpcoming
+      }, ...transactions,])
+    }
+    toast({
+      description: 'Transaction Updated successfully'
+    })
+  }
   const { user, supabase } = useSupabase()
 
   useEffect(() => {
@@ -78,6 +101,7 @@ export default function Transactions() {
         .from('transactions')
         .select('*')
         .eq('userid', user?.id)
+        .order('date', { ascending: false })
       if (results?.data) {
         const trans = results?.data.map(item => {
           return {
@@ -87,6 +111,7 @@ export default function Transactions() {
             type: item.sent,
             date: item.date,
             description: item.beneficiary,
+            isUpcoming: item.isUpcoming,
           }
         })
         updateTransaction([...trans])
@@ -102,26 +127,43 @@ export default function Transactions() {
       .insert({ ...transaction, userid: user?.id })
       .select()
     if (result?.data && result?.data.at(0)) {
-      updateTransaction([...transactions, {
+      updateTransaction([{
         id: result?.data.at(0).id,
         amount: result?.data.at(0).amount,
         title: result?.data.at(0).category,
         type: result?.data.at(0).sent,
         date: result?.data.at(0).date,
         description: result?.data.at(0).beneficiary || 'Empty',
-      }])
+        isUpcoming: result?.data.at(0).isUpcoming
+      }, ...transactions,])
     }
     toast({
       description: 'Transaction added successfully'
     })
   }
   const categories = useCategoryState((state) => state.categories)
+  const [title, setTitle] = useState(categories[0])
+  const [filterValue, setFilterValue] = useState('')
+  useEffect(() => {
+    setFilteredTransactions(transactions)
+    setFilterValue('')
+  }, [transactions])
+const updateFilteredTransactions = () => {
+  const filtered = transactions.filter((transaction) => transaction.description.toLocaleLowerCase().includes(filterValue.toLocaleLowerCase()))
+  setFilteredTransactions(filtered)
+  setFilterValue('')
+}
   return (
     <div className='w-full text-2xl font-bold col-span-6 px-6 pt-6'>
       <h1>Transactions</h1>
 
       <div className='w-full flex items-center justify-between mt-4'>
-        <Input placeholder='Filtet Items...' className='w-[120px] xs:w-[320px]' />
+        <div className='w-full flex items-center justify-start'>
+          <Input value={filterValue} onChange={(e) => setFilterValue(e.target.value)} placeholder='Filtet Items...' className='w-[120px] xs:w-[320px]' />
+          <Button onClick={() => updateFilteredTransactions()} className='rounded-md ml-2 cursor-pointer bg-black text-white p-2'>
+            <Search />
+          </Button>
+        </div>
 
         <Dialog open={openModal} onOpenChange={setOpenModal}>
           <DialogTrigger asChild>
@@ -147,15 +189,14 @@ export default function Transactions() {
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                 /> */}
-                <RadioGroup onValueChange={(e) => setTitle(e)} className='flex' defaultValue={categories[0]}>
+                <RadioGroup onValueChange={(e) => setTitle(e)} className='grid grid-cols-3 w-72' defaultValue={categories[0]}>
                   {categories.map(category => {
                     return (
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center space-x-2 w-max">
                         <RadioGroupItem value={category} id={category} />
-                        <Label htmlFor={category}>{category}</Label>
+                        <Label className='w-full' htmlFor={category}>{category}</Label>
                       </div>
                     )
-
                   })}
                 </RadioGroup>
               </div>
@@ -177,9 +218,8 @@ export default function Transactions() {
                 </Label>
                 <Input
                   id="amount"
-                  type='number'
                   className="col-span-3"
-                  value={amount}
+                  value={amount || ''}
                   onChange={(e) => setAmount(Number(e.target.value))}
                 />
               </div>
@@ -203,6 +243,15 @@ export default function Transactions() {
                   onCheckedChange={() => setType(!type)}
                 />
               </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="type" className="text-right">
+                  Is Upcoming
+                </Label>
+                <Checkbox id="type" className='col-span-3'
+                  checked={isUpcoming}
+                  onCheckedChange={() => setIsUpcoming(!isUpcoming)}
+                />
+              </div>
             </div>
             <DialogFooter>
               <Button type="submit" onClick={() => handleModalSubmit()}>Save changes</Button>
@@ -212,10 +261,21 @@ export default function Transactions() {
       </div>
       {
         domLoaded && (
-          <div className='sm:flex sm:flex-col gap-2 grid grid-cols-2 justify-between sm:justify-normal'>
-            {transactions.map((item, key) => <TransactionCard title={item.title} amount={item.amount} key={key} type={item.type} date={item.date} description={item.description} index={key.toString()} Remove={() => Remove(key, item.id)} />)}
+          <div className='sm:flex sm:flex-col gap-2 grid grid-cols-1 justify-between sm:justify-normal'>
+            {filteredTransactions.map((item, key) => <TransactionCard
+              title={item.title}
+              isUpcoming={item.isUpcoming}
+              amount={item.amount}
+              key={key}
+              type={item.type}
+              date={item.date}
+              description={item.description}
+              index={key.toString()}
+              UpdateTransaction={() => UpdateTransaction(key, item.id)}
+              Remove={() => Remove(key, item.id)}
+            />)}
 
-            {!transactions.length && (
+            {!filteredTransactions.length && (
               <div className='my-4 w-full flex items-center justify-center'>
                 <CircleDashed className='mr-4' />
                 <p className='text-sm font-light'>No transactions available</p>
@@ -228,7 +288,7 @@ export default function Transactions() {
         <div className='rounded-md mr-4 bg-black text-white w-7 flex items-center justify-center h-7'>
           <Bookmark className='w-4 h-4' />
         </div>
-        <p className='text-xs text-gray-600 font-light'>you have {calculateTotalLeft(transactions, balance.income).toLocaleString()} DH remaining funds over the next {timeLeft.toFixed(0)} days</p>
+        {domLoaded && <p className='text-xs text-gray-600 font-light'>you have {calculateTotalLeft(transactions, balance.income).toLocaleString()} DH remaining funds over the next {timeLeft.toFixed(0)} days</p>}
       </div>
     </div >
   )

@@ -3,14 +3,20 @@ import { useSupabase } from '@/components/SupabaseSessionProvider'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { siteConfig } from '@/config/site'
-import { useRouter } from 'next/navigation'
+import { redirect, useRouter } from 'next/navigation'
 import { PasswordForm } from './password-form'
 import { ProfileForm } from './profile-form'
 import { BalanceForm } from './balance-form'
 import { CategoriesForm } from './categories'
+import { useEffect } from 'react'
 
 export default function SettingsProfilePage() {
   const { supabase, user } = useSupabase()
+  useEffect(() => {
+    if (!user) {
+      redirect('/signin')
+    }
+  }, [user])
   const router = useRouter()
   return (
     <div className='p-6'>
