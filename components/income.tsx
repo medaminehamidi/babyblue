@@ -11,7 +11,7 @@ const calculateTotaBills = (transactions: any, balance: any) => {
     return total
   }, 0)
   const totalRecieved = transactions.reduce((total: number, transaction: any) => {
-    if (!transaction.type) {
+    if (!transaction.type && !transaction.isUpcoming) {
       return total + transaction.amount
     }
     return total
@@ -35,7 +35,13 @@ export const calculateTotalLeft = (transactions: any, balance: any) => {
     }
     return total
   }, 0)
-  return balance - totalDept
+  const totalRecieved = transactions.reduce((total: number, transaction: any) => {
+    if (!transaction.type && !transaction.isUpcoming) {
+      return total + transaction.amount
+    }
+    return total
+  }, 0)
+  return balance - totalDept + totalRecieved
 }
 
 export default function Income() {
