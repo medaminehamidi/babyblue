@@ -9,9 +9,9 @@ import { useSupabase } from "@/components/SupabaseSessionProvider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import moment from "moment";
 const calculateTotalTransactions = (transactions: any) => {
-  const totalBills = transactions.reduce((total: number, transaction: any) => {
+  const totalBills = transactions.filter((item: any) => moment(item.date).isAfter(moment().subtract(1, "months"), 'month')).reduce((total: number, transaction: any) => {
 
-    return total + transaction.amount
+    return transaction.type ? total + transaction.amount : total - transaction.amount
   }, 0)
   return totalBills
 }
@@ -43,7 +43,7 @@ export default function Home() {
     const groupedData: any = [];
 
     transactions.forEach((item: any) => {
-      const month = moment(item.date).format("MMMM YYYY"); 
+      const month = moment(item.date).format("MMMM YYYY");
       const existingMonthIndex = groupedData.findIndex((group: any) => group.month === month);
 
       if (existingMonthIndex !== -1) {
@@ -113,10 +113,10 @@ export default function Home() {
 
               {domLoaded && <p className="text-sm">{(calculateTotalTransactions(transactions) / balance.income * 100).toFixed(0)}%</p>}
             </div>
-            <div className="flex items-center mt-2">
+            {Number((calculateTotalTransactions(transactions) / balance.income * 100).toFixed(0)) > 90 ? (<div className="flex items-center mt-2">
               <AlertOctagon className="w-4 h-4 text-red-600" />
               <p className="text-xs ml-2 text-red-600">Your spending limit has almost reached the limit!</p>
-            </div>
+            </div>) : null}
           </div>
         </div>
       </div>
